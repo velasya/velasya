@@ -7,12 +7,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        'vintage-cream': '#F5F5DC',
-        'vintage-navy': '#1B1B3A',
-        'vintage-blue': '#4A5D79',
+        'vintage-cream': '#F5F1E8',
+        'vintage-navy': '#1B2B4B',
+        'vintage-blue': '#3B5998',
         'vintage-gold': '#D4AF37'
       }
-    }
+    },
   },
   plugins: [],
 }
