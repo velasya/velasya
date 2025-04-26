@@ -5,8 +5,8 @@ import ProductListing from "./pages/ProductListing";
 import ProductDetail from "./pages/ProductDetail";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";  
 import { useRoutes } from "react-router-dom";
-
 
 function App() {
   return (
@@ -20,6 +20,7 @@ function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
           </Routes>
         </main>
       </div>
