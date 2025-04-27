@@ -6,11 +6,59 @@ function Auth() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [step, setStep] = useState(1); // 1: Personal Info, 2: Role Selection, 3: OTP
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    fullName: "",
+    phoneNumber: "",
+    role: "",
+    otp: "",
+  });
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const validatePhoneNumber = (phone) => {
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRoleSelect = async (selectedRole) => {
+    setFormData((prev) => ({ ...prev, role: selectedRole }));
+    // Move to OTP verification
+    setStep(3);
+    // Here you would trigger OTP sending via email and SMS
+  };
+
+  const validateForm = () => {
+    if (!formData.email || !validateEmail(formData.email)) {
+      setErrorMessage("Please enter a valid email address");
+      return false;
+    }
+    if (!formData.fullName || formData.fullName.length < 2) {
+      setErrorMessage("Please enter your full name");
+      return false;
+    }
+    if (!formData.phoneNumber || !validatePhoneNumber(formData.phoneNumber)) {
+      setErrorMessage("Please enter a valid phone number");
+      return false;
+    }
+    if (!formData.password || formData.password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters long");
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,30 +67,147 @@ function Auth() {
 
     try {
       if (isLogin) {
-        const { data, error } = await signIn(email, password);
+        const { data, error } = await signIn(formData.email, formData.password);
         if (error) throw error;
         navigate("/dashboard");
       } else {
-        const { data, error } = await signUp(email, password, fullName);
-        if (error) throw error;
-        alert(
-          "Registration successful! Please check your email to verify your account.",
-        );
-        setIsLogin(true);
+        if (step === 1 && validateForm()) {
+          setStep(2); // Move to role selection
+        } else if (step === 3) {
+          // Verify OTP and complete registration
+          const { data, error } = await signUp({
+            email: formData.email,
+            password: formData.password,
+            fullName: formData.fullName,
+            phoneNumber: formData.phoneNumber,
+            role: formData.role,
+          });
+          if (error) throw error;
+          alert("Registration successful! Please check your email to verify your account.");
+          setIsLogin(true);
+          setStep(1);
+        }
       }
     } catch (error) {
       console.error("Authentication error:", error);
-      setErrorMessage(
-        error.message || "An error occurred during authentication",
-      );
+      setErrorMessage(error.message || "An error occurred during authentication");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const renderPersonalInfoForm = () => (
+    <div className="space-y-6">
+      <div>
+        <label htmlFor="fullName" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+          Full Name
+        </label>
+        <input
+          id="fullName"
+          name="fullName"
+          type="text"
+          value={formData.fullName}
+          onChange={handleInputChange}
+          className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
+          placeholder="Enter your full name"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+          Email
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleInputChange}
+          className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
+          placeholder="Enter your email"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phoneNumber" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+          Phone Number
+        </label>
+        <input
+          id="phoneNumber"
+          name="phoneNumber"
+          type="tel"
+          value={formData.phoneNumber}
+          onChange={handleInputChange}
+          className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
+          placeholder="+1234567890"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+          Password
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          value={formData.password}
+          onChange={handleInputChange}
+          className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
+          placeholder="Enter your password"
+          required
+        />
+      </div>
+    </div>
+  );
+
+  const renderRoleSelection = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl text-vintage-cream text-center mb-6">Choose your role</h3>
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          onClick={() => handleRoleSelect('buyer')}
+          className="bg-vintage-gold/10 hover:bg-vintage-gold text-vintage-gold hover:text-vintage-navy p-6 rounded-lg border-2 border-vintage-gold/50 transition-all duration-300"
+        >
+          <h4 className="text-lg font-semibold mb-2">Continue as Buyer</h4>
+          <p className="text-sm opacity-80">Bid on unique items and grow your collection</p>
+        </button>
+        <button
+          onClick={() => handleRoleSelect('seller')}
+          className="bg-vintage-gold/10 hover:bg-vintage-gold text-vintage-gold hover:text-vintage-navy p-6 rounded-lg border-2 border-vintage-gold/50 transition-all duration-300"
+        >
+          <h4 className="text-lg font-semibold mb-2">Continue as Seller</h4>
+          <p className="text-sm opacity-80">List items and reach potential buyers</p>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderOTPVerification = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl text-vintage-cream text-center mb-6">Verify Your Account</h3>
+      <p className="text-vintage-cream/80 text-center">
+        Please enter the verification code sent to your email and phone
+      </p>
+      <div>
+        <input
+          type="text"
+          name="otp"
+          value={formData.otp}
+          onChange={handleInputChange}
+          className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
+          placeholder="Enter verification code"
+          maxLength="6"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center bg-vintage-navy relative">
-      {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div
           className="absolute inset-0"
@@ -67,64 +232,47 @@ function Auth() {
                 </div>
               )}
 
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-vintage-cream/80 mb-2"
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
-                  placeholder="Enter your email"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+              {isLogin ? (
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+                      Email
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
+                      placeholder="Enter your email"
+                      required
+                    />
+                  </div>
 
-              {!isLogin && (
-                <div>
-                  <label
-                    htmlFor="fullName"
-                    className="block text-sm font-medium text-vintage-cream/80 mb-2"
-                  >
-                    Full Name
-                  </label>
-                  <input
-                    id="fullName"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
-                    placeholder="Enter your full name"
-                    required
-                    disabled={isLoading}
-                  />
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+                      Password
+                    </label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
+                      placeholder="Enter your password"
+                      required
+                    />
+                  </div>
                 </div>
+              ) : (
+                <>
+                  {step === 1 && renderPersonalInfoForm()}
+                  {step === 2 && renderRoleSelection()}
+                  {step === 3 && renderOTPVerification()}
+                </>
               )}
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-vintage-cream/80 mb-2"
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
-                  placeholder="Enter your password"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
 
               <button
                 type="submit"
@@ -135,13 +283,28 @@ function Auth() {
                   ? "Processing..."
                   : isLogin
                     ? "Sign In"
-                    : "Create Account"}
+                    : step === 1
+                      ? "Continue"
+                      : step === 3
+                        ? "Verify & Complete"
+                        : "Next"}
               </button>
             </form>
 
             <div className="mt-6 text-center space-y-3">
               <button
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setStep(1);
+                  setFormData({
+                    email: "",
+                    password: "",
+                    fullName: "",
+                    phoneNumber: "",
+                    role: "",
+                    otp: "",
+                  });
+                }}
                 className="text-vintage-cream/80 hover:text-vintage-gold text-sm font-medium transition-colors"
               >
                 {isLogin

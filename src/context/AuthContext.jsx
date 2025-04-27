@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   // Sign up with email and password
-  const signUp = async (email, password, fullName, role = 'buyer') => {
+  const signUp = async ({ email, password, fullName, phoneNumber, role }) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -66,7 +66,9 @@ export function AuthProvider({ children }) {
               id: data.user.id,
               email,
               full_name: fullName,
+              phone_number: phoneNumber,
               role,
+              otp_verified: false,
             },
           ])
 
@@ -137,6 +139,24 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Verify OTP
+  const verifyOTP = async (otp) => {
+    try {
+      // Here you would implement the OTP verification logic
+      // This is a placeholder for the actual implementation
+      const { error } = await supabase
+        .from('users')
+        .update({ otp_verified: true })
+        .eq('id', user?.id)
+
+      if (error) throw error
+
+      return { error: null }
+    } catch (error) {
+      return { error }
+    }
+  }
+
   const value = {
     user,
     loading,
@@ -145,6 +165,7 @@ export function AuthProvider({ children }) {
     signOut,
     resetPassword,
     updatePassword,
+    verifyOTP,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
