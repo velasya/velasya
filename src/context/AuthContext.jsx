@@ -6,6 +6,9 @@ const AuthContext = createContext()
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [otp, setOtp] = useState('')
+  const [otpError, setOtpError] = useState(null)
+  const [otpVerified, setOtpVerified] = useState(false)
 
   useEffect(() => {
     // Get initial session
@@ -68,7 +71,7 @@ export function AuthProvider({ children }) {
               full_name: fullName,
               phone_number: phoneNumber,
               role,
-              otp_verified: false,
+              otp_verified: false, // OTP is not verified at sign-up 
             },
           ])
 
@@ -140,19 +143,25 @@ export function AuthProvider({ children }) {
   }
 
   // Verify OTP
-  const verifyOTP = async (otp) => {
+  const verifyOTP = async () => {
     try {
-      // Here you would implement the OTP verification logic
-      // This is a placeholder for the actual implementation
+      // Check if OTP is correct
       const { error } = await supabase
         .from('users')
         .update({ otp_verified: true })
         .eq('id', user?.id)
+        .eq('otp', otp)
 
-      if (error) throw error
+      if (error) {
+        setOtpError('Invalid OTP')
+        return { error }
+      }
 
+      setOtpVerified(true)
+      setOtpError(null)
       return { error: null }
     } catch (error) {
+      setOtpError('Error verifying OTP')
       return { error }
     }
   }
@@ -166,6 +175,10 @@ export function AuthProvider({ children }) {
     resetPassword,
     updatePassword,
     verifyOTP,
+    otp,
+    setOtp,
+    otpError,
+    otpVerified,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

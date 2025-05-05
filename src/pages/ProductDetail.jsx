@@ -1,8 +1,12 @@
+import { useEffect } from 'react'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { format } from 'date-fns'
 
 function ProductDetail() {
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
   const { id } = useParams()
   const [bidAmount, setBidAmount] = useState('')
 
@@ -30,7 +34,7 @@ function ProductDetail() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div id='1pro' className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Product Image */}
         <div className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden">
