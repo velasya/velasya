@@ -27,7 +27,47 @@ export const getCurrentUser = async () => {
 
   if (error) {
     console.error("Error fetching user profile:", error);
-    return null;
+
+    // If the profile doesn't exist yet, try to create it from user metadata
+    if (error.code === "PGRST116") {
+      try {
+        // Create profile from auth metadata if available
+        if (user.user_metadata) {
+          // Format phone number if needed
+          let phoneNumber = user.user_metadata.phone_number;
+          if (phoneNumber && !phoneNumber.startsWith("+")) {
+            phoneNumber = `+${phoneNumber}`;
+          }
+
+          const { error: insertError } = await supabase.from("users").insert([
+            {
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata.full_name,
+              phone_number: phoneNumber,
+              role: user.user_metadata.role,
+              otp_verified: false,
+            },
+          ]);
+
+          if (!insertError) {
+            // Try fetching again after creating
+            const { data: newData } = await supabase
+              .from("users")
+              .select("*")
+              .eq("id", user.id)
+              .single();
+
+            if (newData) {
+              return { ...user, profile: newData };
+            }
+          }
+        }
+      } catch (createError) {
+        console.error("Error creating missing user profile:", createError);
+      }
+    }
+    return { ...user, profile: null };
   }
 
   return { ...user, profile: data };

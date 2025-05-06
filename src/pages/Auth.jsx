@@ -25,7 +25,7 @@ function Auth() {
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return emailRegex.test(email) && !email.includes("@example.com");
   };
 
   const handleInputChange = (e) => {
@@ -75,6 +75,13 @@ function Auth() {
           setStep(2); // Move to role selection
         } else if (step === 3) {
           // Verify OTP and complete registration
+          console.log("Submitting registration with:", {
+            email: formData.email,
+            fullName: formData.fullName,
+            phoneNumber: formData.phoneNumber,
+            role: formData.role,
+          });
+
           const { data, error } = await signUp({
             email: formData.email,
             password: formData.password,
@@ -83,14 +90,18 @@ function Auth() {
             role: formData.role,
           });
           if (error) throw error;
-          alert("Registration successful! Please check your email to verify your account.");
+          alert(
+            "Registration successful! Please check your email to verify your account.",
+          );
           setIsLogin(true);
           setStep(1);
         }
       }
     } catch (error) {
       console.error("Authentication error:", error);
-      setErrorMessage(error.message || "An error occurred during authentication");
+      setErrorMessage(
+        error.message || "An error occurred during authentication",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +110,10 @@ function Auth() {
   const renderPersonalInfoForm = () => (
     <div className="space-y-6">
       <div>
-        <label htmlFor="fullName" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+        <label
+          htmlFor="fullName"
+          className="block text-sm font-medium text-vintage-cream/80 mb-2"
+        >
           Full Name
         </label>
         <input
@@ -115,7 +129,10 @@ function Auth() {
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-vintage-cream/80 mb-2"
+        >
           Email
         </label>
         <input
@@ -131,7 +148,10 @@ function Auth() {
       </div>
 
       <div>
-        <label htmlFor="phoneNumber" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+        <label
+          htmlFor="phoneNumber"
+          className="block text-sm font-medium text-vintage-cream/80 mb-2"
+        >
           Phone Number
         </label>
         <input
@@ -147,7 +167,10 @@ function Auth() {
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-vintage-cream/80 mb-2"
+        >
           Password
         </label>
         <input
@@ -161,26 +184,74 @@ function Auth() {
           required
         />
       </div>
+
+      <div className="flex justify-end mt-4">
+        <button
+          type="button"
+          onClick={() => validateForm() && setStep(2)}
+          className="flex items-center justify-center bg-vintage-gold hover:bg-vintage-gold/90 text-vintage-navy font-semibold py-2 px-4 rounded-full transition-all duration-300"
+        >
+          Next
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 ml-1"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 
   const renderRoleSelection = () => (
     <div className="space-y-6">
-      <h3 className="text-xl text-vintage-cream text-center mb-6">Choose your role</h3>
+      <h3 className="text-xl text-vintage-cream text-center mb-6">
+        Choose your role
+      </h3>
       <div className="grid grid-cols-2 gap-4">
         <button
-          onClick={() => handleRoleSelect('buyer')}
+          onClick={() => handleRoleSelect("buyer")}
           className="bg-vintage-gold/10 hover:bg-vintage-gold text-vintage-gold hover:text-vintage-navy p-6 rounded-lg border-2 border-vintage-gold/50 transition-all duration-300"
         >
           <h4 className="text-lg font-semibold mb-2">Continue as Buyer</h4>
-          <p className="text-sm opacity-80">Bid on unique items and grow your collection</p>
+          <p className="text-sm opacity-80">
+            Bid on unique items and grow your collection
+          </p>
         </button>
         <button
-          onClick={() => handleRoleSelect('seller')}
+          onClick={() => handleRoleSelect("seller")}
           className="bg-vintage-gold/10 hover:bg-vintage-gold text-vintage-gold hover:text-vintage-navy p-6 rounded-lg border-2 border-vintage-gold/50 transition-all duration-300"
         >
           <h4 className="text-lg font-semibold mb-2">Continue as Seller</h4>
-          <p className="text-sm opacity-80">List items and reach potential buyers</p>
+          <p className="text-sm opacity-80">
+            List items and reach potential buyers
+          </p>
+        </button>
+      </div>
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={() => setStep(1)}
+          className="flex items-center justify-center bg-vintage-navy border border-vintage-gold/50 text-vintage-gold font-medium py-2 px-4 rounded-full hover:bg-vintage-navy/80 transition-all duration-300"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-1"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Back
         </button>
       </div>
     </div>
@@ -188,7 +259,9 @@ function Auth() {
 
   const renderOTPVerification = () => (
     <div className="space-y-6">
-      <h3 className="text-xl text-vintage-cream text-center mb-6">Verify Your Account</h3>
+      <h3 className="text-xl text-vintage-cream text-center mb-6">
+        Verify Your Account
+      </h3>
       <p className="text-vintage-cream/80 text-center">
         Please enter the verification code sent to your email and phone
       </p>
@@ -202,6 +275,26 @@ function Auth() {
           placeholder="Enter verification code"
           maxLength="6"
         />
+      </div>
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={() => setStep(2)}
+          className="flex items-center justify-center bg-vintage-navy border border-vintage-gold/50 text-vintage-gold font-medium py-2 px-4 rounded-full hover:bg-vintage-navy/80 transition-all duration-300"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-1"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Back
+        </button>
       </div>
     </div>
   );
@@ -235,7 +328,10 @@ function Auth() {
               {isLogin ? (
                 <div className="space-y-6">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-vintage-cream/80 mb-2"
+                    >
                       Email
                     </label>
                     <input
@@ -251,7 +347,10 @@ function Auth() {
                   </div>
 
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-vintage-cream/80 mb-2">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-vintage-cream/80 mb-2"
+                    >
                       Password
                     </label>
                     <input

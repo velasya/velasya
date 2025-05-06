@@ -17,72 +17,103 @@ export function AuthProvider({ children }) {
       
       try {
         // Check for existing session
-        const { data: { session } } = await supabase.auth.getSession()
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (session) {
-          const currentUser = await getCurrentUser()
-          setUser(currentUser)
+          const currentUser = await getCurrentUser();
+          setUser(currentUser);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error)
+        console.error("Error initializing auth:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    initializeAuth()
+    initializeAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session) {
-          const currentUser = await getCurrentUser()
-          setUser(currentUser)
-        } else {
-          setUser(null)
-        }
-        setLoading(false)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } else {
+        setUser(null);
       }
-    )
+      setLoading(false);
+    });
 
     return () => {
-      subscription?.unsubscribe()
-    }
-  }, [])
+      subscription?.unsubscribe();
+    };
+  }, []);
 
   // Sign up with email and password
   const signUp = async ({ email, password, fullName, phoneNumber, role }) => {
     try {
+      // Validate email format before proceeding
+      if (email.includes("@example.com")) {
+        return {
+          data: null,
+          error: { message: "Example email addresses are not allowed" },
+        };
+      }
+
+      // Validate phone number format before proceeding
+      if (phoneNumber && !phoneNumber.startsWith("+")) {
+        phoneNumber = `+${phoneNumber}`; // Ensure phone number has international format
+      }
+
+      // Add metadata to the signup to ensure it's available in the JWT
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-      })
+        options: {
+          data: {
+            full_name: fullName,
+            phone_number: phoneNumber,
+            role: role,
+          },
+        },
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
       // Create user profile in the users table
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: data.user.id,
-              email,
-              full_name: fullName,
-              phone_number: phoneNumber,
-              role,
-              otp_verified: false, // OTP is not verified at sign-up 
-            },
-          ])
+        console.log("Creating user profile for:", data.user.id);
 
-        if (profileError) throw profileError
+        const { data, error } = await supabase
+        .from("users")
+        .insert([
+          {
+            id: data.user.id,
+            full_name: fullName,
+            email: email,
+            phone_number: phoneNumber,
+            role: role,
+            otp_verified: false, // OTP is not verified at sign-up
+          },
+        ]);
+
+        if (profileError) {
+          console.error("Error creating user profile:", profileError);
+          throw profileError;
+        }
+
+        console.log("User profile created successfully");
       }
 
-      return { data, error: null }
+      return { data, error: null };
     } catch (error) {
-      return { data: null, error }
+      console.error("Signup error:", error);
+      return { data: null, error };
     }
-  }
+  };
 
   // Sign in with email and password
   const signIn = async (email, password) => {
@@ -90,57 +121,57 @@ export function AuthProvider({ children }) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
-      return { data, error: null }
+      return { data, error: null };
     } catch (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
-  }
+  };
 
   // Sign out
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      
-      return { error: null }
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      return { error: null };
     } catch (error) {
-      return { error }
+      return { error };
     }
-  }
+  };
 
   // Reset password
   const resetPassword = async (email) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
-      })
-      
-      if (error) throw error
-      
-      return { error: null }
+      });
+
+      if (error) throw error;
+
+      return { error: null };
     } catch (error) {
-      return { error }
+      return { error };
     }
-  }
+  };
 
   // Update password
   const updatePassword = async (newPassword) => {
     try {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
-      })
-      
-      if (error) throw error
-      
-      return { error: null }
+      });
+
+      if (error) throw error;
+
+      return { error: null };
     } catch (error) {
-      return { error }
+      return { error };
     }
-  }
+  };
 
   // Verify OTP
   const verifyOTP = async () => {
@@ -181,7 +212,7 @@ export function AuthProvider({ children }) {
     otpVerified,
   }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => {
