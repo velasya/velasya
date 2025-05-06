@@ -90,18 +90,6 @@ function Navbar() {
                   {link.name}
                 </Link>
               ))}
-              <Link
-                to="/list-product"
-                className="block py-2.5 text-base font-medium text-vintage-cream/80 hover:text-vintage-gold transition-colors duration-200"
-              >
-                List Item
-              </Link>
-              <Link
-                to="/dashboard"
-                className="block py-2.5 text-base font-medium text-vintage-cream/80 hover:text-vintage-gold transition-colors duration-200"
-              >
-                Dashboard
-              </Link>
               <div className="pt-2 border-t border-white/10">
                 <Link
                   to="/auth"
