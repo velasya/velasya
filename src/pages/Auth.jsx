@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
 
 function Auth() {
   const navigate = useNavigate();
@@ -33,11 +34,40 @@ function Auth() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleOtpVerification = async () => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.verifyOtp({
+      email: formData.email,
+      token: formData.otp,
+      type: "email",
+    });
+  };
+
   const handleRoleSelect = async (selectedRole) => {
     setFormData((prev) => ({ ...prev, role: selectedRole }));
-    // Move to OTP verification
     setStep(3);
     // Here you would trigger OTP sending via email and SMS
+    try {
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email: formData.email,
+        options: {
+          shouldCreateUser: true,
+        },
+      });
+      if (error) {
+        console.error("Error sending OTP:", error);
+        setErrorMessage("Failed to send OTP. Please try again.");
+        return;
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      setErrorMessage("Failed to send OTP. Please try again.");
+      return;
+    }
   };
 
   const validateForm = () => {
@@ -73,25 +103,20 @@ function Auth() {
       } else {
         if (step === 1 && validateForm()) {
           setStep(2); // Move to role selection
+        } else if (step === 2) {
+          handleRoleSelect(formData.role);
         } else if (step === 3) {
           // Verify OTP and complete registration
+
           console.log("Submitting registration with:", {
             email: formData.email,
             fullName: formData.fullName,
             phoneNumber: formData.phoneNumber,
             role: formData.role,
           });
-
-          const { data, error } = await signUp({
-            email: formData.email,
-            password: formData.password,
-            fullName: formData.fullName,
-            phoneNumber: formData.phoneNumber,
-            role: formData.role,
-          });
           if (error) throw error;
           alert(
-            "Registration successful! Please check your email to verify your account.",
+            "Registration successful! Please check your email to verify your account."
           );
           setIsLogin(true);
           setStep(1);
@@ -100,7 +125,7 @@ function Auth() {
     } catch (error) {
       console.error("Authentication error:", error);
       setErrorMessage(
-        error.message || "An error occurred during authentication",
+        error.message || "An error occurred during authentication"
       );
     } finally {
       setIsLoading(false);
@@ -112,8 +137,7 @@ function Auth() {
       <div>
         <label
           htmlFor="fullName"
-          className="block text-sm font-medium text-vintage-cream/80 mb-2"
-        >
+          className="block text-sm font-medium text-vintage-cream/80 mb-2">
           Full Name
         </label>
         <input
@@ -131,8 +155,7 @@ function Auth() {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-vintage-cream/80 mb-2"
-        >
+          className="block text-sm font-medium text-vintage-cream/80 mb-2">
           Email
         </label>
         <input
@@ -150,8 +173,7 @@ function Auth() {
       <div>
         <label
           htmlFor="phoneNumber"
-          className="block text-sm font-medium text-vintage-cream/80 mb-2"
-        >
+          className="block text-sm font-medium text-vintage-cream/80 mb-2">
           Phone Number
         </label>
         <input
@@ -169,8 +191,7 @@ function Auth() {
       <div>
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-vintage-cream/80 mb-2"
-        >
+          className="block text-sm font-medium text-vintage-cream/80 mb-2">
           Password
         </label>
         <input
@@ -189,19 +210,16 @@ function Auth() {
         <button
           type="button"
           onClick={() => validateForm() && setStep(2)}
-          className="flex items-center justify-center bg-vintage-gold hover:bg-vintage-gold/90 text-vintage-navy font-semibold py-2 px-4 rounded-full transition-all duration-300"
-        >
+          className="flex items-center justify-center bg-vintage-gold hover:bg-vintage-gold/90 text-vintage-navy font-semibold py-2 px-4 rounded-full transition-all duration-300">
           Next
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5 ml-1"
             viewBox="0 0 20 20"
-            fill="currentColor"
-          >
+            fill="currentColor">
             <path
               fillRule="evenodd"
               d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-              clipRule="evenodd"
             />
           </svg>
         </button>
@@ -217,8 +235,7 @@ function Auth() {
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={() => handleRoleSelect("buyer")}
-          className="bg-vintage-gold/10 hover:bg-vintage-gold text-vintage-gold hover:text-vintage-navy p-6 rounded-lg border-2 border-vintage-gold/50 transition-all duration-300"
-        >
+          className="bg-vintage-gold/10 hover:bg-vintage-gold text-vintage-gold hover:text-vintage-navy p-6 rounded-lg border-2 border-vintage-gold/50 transition-all duration-300">
           <h4 className="text-lg font-semibold mb-2">Continue as Buyer</h4>
           <p className="text-sm opacity-80">
             Bid on unique items and grow your collection
@@ -226,8 +243,7 @@ function Auth() {
         </button>
         <button
           onClick={() => handleRoleSelect("seller")}
-          className="bg-vintage-gold/10 hover:bg-vintage-gold text-vintage-gold hover:text-vintage-navy p-6 rounded-lg border-2 border-vintage-gold/50 transition-all duration-300"
-        >
+          className="bg-vintage-gold/10 hover:bg-vintage-gold text-vintage-gold hover:text-vintage-navy p-6 rounded-lg border-2 border-vintage-gold/50 transition-all duration-300">
           <h4 className="text-lg font-semibold mb-2">Continue as Seller</h4>
           <p className="text-sm opacity-80">
             List items and reach potential buyers
@@ -237,14 +253,12 @@ function Auth() {
       <div className="flex justify-between mt-4">
         <button
           onClick={() => setStep(1)}
-          className="flex items-center justify-center bg-vintage-navy border border-vintage-gold/50 text-vintage-gold font-medium py-2 px-4 rounded-full hover:bg-vintage-navy/80 transition-all duration-300"
-        >
+          className="flex items-center justify-center bg-vintage-navy border border-vintage-gold/50 text-vintage-gold font-medium py-2 px-4 rounded-full hover:bg-vintage-navy/80 transition-all duration-300">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5 mr-1"
             viewBox="0 0 20 20"
-            fill="currentColor"
-          >
+            fill="currentColor">
             <path
               fillRule="evenodd"
               d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
@@ -270,7 +284,7 @@ function Auth() {
           type="text"
           name="otp"
           value={formData.otp}
-          onChange={handleInputChange}
+          onChange={handleOtpVerification}
           className="w-full px-4 py-3 rounded-full bg-white/10 border border-vintage-cream/20 text-vintage-cream placeholder-vintage-cream/50 focus:outline-none focus:ring-2 focus:ring-vintage-gold"
           placeholder="Enter verification code"
           maxLength="6"
@@ -279,14 +293,12 @@ function Auth() {
       <div className="flex justify-between mt-4">
         <button
           onClick={() => setStep(2)}
-          className="flex items-center justify-center bg-vintage-navy border border-vintage-gold/50 text-vintage-gold font-medium py-2 px-4 rounded-full hover:bg-vintage-navy/80 transition-all duration-300"
-        >
+          className="flex items-center justify-center bg-vintage-navy border border-vintage-gold/50 text-vintage-gold font-medium py-2 px-4 rounded-full hover:bg-vintage-navy/80 transition-all duration-300">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5 mr-1"
             viewBox="0 0 20 20"
-            fill="currentColor"
-          >
+            fill="currentColor">
             <path
               fillRule="evenodd"
               d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
@@ -330,8 +342,7 @@ function Auth() {
                   <div>
                     <label
                       htmlFor="email"
-                      className="block text-sm font-medium text-vintage-cream/80 mb-2"
-                    >
+                      className="block text-sm font-medium text-vintage-cream/80 mb-2">
                       Email
                     </label>
                     <input
@@ -349,8 +360,7 @@ function Auth() {
                   <div>
                     <label
                       htmlFor="password"
-                      className="block text-sm font-medium text-vintage-cream/80 mb-2"
-                    >
+                      className="block text-sm font-medium text-vintage-cream/80 mb-2">
                       Password
                     </label>
                     <input
@@ -376,17 +386,16 @@ function Auth() {
               <button
                 type="submit"
                 className="w-full bg-vintage-gold hover:bg-vintage-gold/90 text-vintage-navy font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-70 disabled:transform-none"
-                disabled={isLoading}
-              >
+                disabled={isLoading}>
                 {isLoading
                   ? "Processing..."
                   : isLogin
-                    ? "Sign In"
-                    : step === 1
-                      ? "Continue"
-                      : step === 3
-                        ? "Verify & Complete"
-                        : "Next"}
+                  ? "Sign In"
+                  : step === 1
+                  ? "Continue"
+                  : step === 3
+                  ? "Verify & Complete"
+                  : "Next"}
               </button>
             </form>
 
@@ -404,8 +413,7 @@ function Auth() {
                     otp: "",
                   });
                 }}
-                className="text-vintage-cream/80 hover:text-vintage-gold text-sm font-medium transition-colors"
-              >
+                className="text-vintage-cream/80 hover:text-vintage-gold text-sm font-medium transition-colors">
                 {isLogin
                   ? "Don't have an account? Sign up"
                   : "Already have an account? Sign in"}
@@ -415,8 +423,7 @@ function Auth() {
                 <div>
                   <Link
                     to="/forgot-password"
-                    className="block text-vintage-cream/80 hover:text-vintage-gold text-sm font-medium transition-colors mt-2"
-                  >
+                    className="block text-vintage-cream/80 hover:text-vintage-gold text-sm font-medium transition-colors mt-2">
                     Forgot your password?
                   </Link>
                 </div>
@@ -430,3 +437,4 @@ function Auth() {
 }
 
 export default Auth;
+

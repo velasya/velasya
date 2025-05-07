@@ -51,7 +51,18 @@ export function AuthProvider({ children }) {
       subscription?.unsubscribe();
     };
   }, []);
-
+  //Sign up with Otp --SignInWthOtp
+  // const signInWithOtp = async ({ email }) => {
+  //   const { data, error } = await supabase.auth.signInWithOtp({
+  //     email: email, // Email address to send the OTP to
+  //     options: {
+  //       // set this to false if you do not want the user to be automatically signed up
+  //       shouldCreateUser: false,
+  //     },
+  //   });
+  //   return { data, error };
+  // };
+    
   // Sign up with email and password
   const signUp = async ({ email, password, fullName, phoneNumber, role }) => {
     try {
@@ -175,36 +186,25 @@ export function AuthProvider({ children }) {
 
   // Verify OTP
   const verifyOTP = async () => {
-    try {
-      // Check if OTP is correct
-      const { error } = await supabase
-        .from('users')
-        .update({ otp_verified: true })
-        .eq('id', user?.id)
-        .eq('otp', otp)
-
-      if (error) {
-        setOtpError('Invalid OTP')
-        return { error }
-      }
-
-      setOtpVerified(true)
-      setOtpError(null)
-      return { error: null }
-    } catch (error) {
-      setOtpError('Error verifying OTP')
-      return { error }
-    }
+    const {
+      data: {session},
+      error,
+    } = await supabase.auth.verifyOTP({
+      email: email,
+      token: otp,
+      type: 'email',
+    })
   }
 
   const value = {
     user,
     loading,
-    signUp,
+    // signUp,
     signIn,
     signOut,
     resetPassword,
     updatePassword,
+    // signInWithOtp,
     verifyOTP,
     otp,
     setOtp,
